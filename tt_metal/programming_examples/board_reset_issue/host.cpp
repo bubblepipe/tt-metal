@@ -182,13 +182,10 @@ int main() {
         
         // Set runtime arguments matching kernel expectations
         const std::vector<uint32_t> runtime_args = {
-            sparse_buffer->address(),          // 0: sparse_addr
-            dense_buffer->address(),            // 1: dense_addr
-            pattern_buffer->address(),          // 2: pattern_addr
-            pattern_gather_buffer->address(),   // 3: pattern_gather_addr
-            0,                                  // 4: start_element
-            num_elements,                       // 5: end_element (10000 from -l10000)
-            pattern_length,                     // 6: pattern_length
+            pattern_buffer->address(),          // 0: pattern_addr
+            0,                                  // 1: start_element
+            num_elements,                       // 2: end_element (10000 from -l10000)
+            pattern_length,                     // 3: pattern_length
          
         };
         

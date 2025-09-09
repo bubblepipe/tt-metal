@@ -7,13 +7,10 @@
 
 void kernel_main() {
     // Runtime arguments
-    uint32_t sparse_addr = get_arg_val<uint32_t>(0);
-    uint32_t dense_addr = get_arg_val<uint32_t>(1);
-    uint32_t pattern_addr = get_arg_val<uint32_t>(2);
-    uint32_t pattern_gather_addr = get_arg_val<uint32_t>(3);
-    uint32_t start_element = get_arg_val<uint32_t>(4);
-    uint32_t end_element = get_arg_val<uint32_t>(5);
-    uint32_t pattern_length = get_arg_val<uint32_t>(6);
+    uint32_t pattern_addr = get_arg_val<uint32_t>(0);
+    uint32_t start_element = get_arg_val<uint32_t>(1);
+    uint32_t end_element = get_arg_val<uint32_t>(2);
+    uint32_t pattern_length = get_arg_val<uint32_t>(3);
   
     // Early exit if no work to do
     if (start_element >= end_element) {
