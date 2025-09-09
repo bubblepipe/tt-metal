@@ -164,8 +164,6 @@ int main() {
         std::vector<uint32_t> compile_args = {
             0,  // cb_pattern
             1,  // cb_pattern_gather
-            2,  // cb_sparse
-            3   // cb_dense
         };
         
         // Create kernel with compile-time args
@@ -191,10 +189,7 @@ int main() {
             0,                                  // 4: start_element
             num_elements,                       // 5: end_element (10000 from -l10000)
             pattern_length,                     // 6: pattern_length
-            delta,                              // 7: delta (1)
-            count,                              // 8: count (1)
-            wrap,                               // 9: wrap (2 from -w 2)
-            sparse_size                         // 10: sparse_size_elements
+         
         };
         
         SetRuntimeArgs(program, kernel_id, core, runtime_args);

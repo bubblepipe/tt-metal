@@ -14,11 +14,7 @@ void kernel_main() {
     uint32_t start_element = get_arg_val<uint32_t>(4);
     uint32_t end_element = get_arg_val<uint32_t>(5);
     uint32_t pattern_length = get_arg_val<uint32_t>(6);
-    uint32_t delta = get_arg_val<uint32_t>(7);
-    uint32_t count = get_arg_val<uint32_t>(8);
-    uint32_t wrap = get_arg_val<uint32_t>(9);
-    uint32_t sparse_size_elements = get_arg_val<uint32_t>(10);
-    
+  
     // Early exit if no work to do
     if (start_element >= end_element) {
         return;
