@@ -27,8 +27,6 @@ void kernel_main() {
     // Compile-time buffer indices
     constexpr uint32_t cb_pattern = get_compile_time_arg_val(0);
     constexpr uint32_t cb_pattern_gather = get_compile_time_arg_val(1);
-    constexpr uint32_t cb_sparse = get_compile_time_arg_val(2);
-    constexpr uint32_t cb_dense = get_compile_time_arg_val(3);
     
     constexpr uint32_t tile_size_bytes = 2048;  // 32x32 BFloat16 elements
     constexpr uint32_t elements_per_tile = 1024;  // 32x32
@@ -36,8 +34,6 @@ void kernel_main() {
     // L1 buffer addresses for caching
     uint32_t pattern_l1_addr = get_write_ptr(cb_pattern);
     uint32_t pattern_gather_l1_addr = get_write_ptr(cb_pattern_gather);
-    uint32_t sparse_l1_addr = get_write_ptr(cb_sparse);
-    uint32_t dense_l1_addr = get_write_ptr(cb_dense);
     
     // Cache for tiles to minimize DRAM reads
     uint32_t cached_pattern_tile_id = UINT32_MAX;
@@ -45,28 +41,18 @@ void kernel_main() {
     uint32_t cached_sparse_tile_id = UINT32_MAX;
     uint32_t cached_dense_tile_id = UINT32_MAX;
     
-    // DPRINT << "Multi-gather kernel: processing elements " << start_element << " to " << end_element << ENDL();
-    // DPRINT << "Pattern length: " << pattern_length << ", delta: " << delta << ", count: " << count << ", wrap: " << wrap << ENDL();
-    
     // Process elements assigned to this coreth
     for (uint32_t elem_idx = start_element; elem_idx < end_element; elem_idx++) {
         uint32_t j = elem_idx % pattern_length;
         uint32_t i = elem_idx / pattern_length;
         
-        // Load pattern_gather tile if needed
-        uint32_t pattern_gather_tile_id = j / elements_per_tile;
-        if (pattern_gather_tile_id != cached_pattern_gather_tile_id) {
-            uint32_t pattern_gather_tile_addr = pattern_gather_addr + pattern_gather_tile_id * tile_size_bytes;
-            noc_async_read(get_noc_addr(pattern_gather_tile_addr), pattern_gather_l1_addr, tile_size_bytes);
-            noc_async_read_barrier();
-            cached_pattern_gather_tile_id = pattern_gather_tile_id;
-        }
         
         // Get pattern_gather[j] value
         uint32_t* pattern_gather_data = reinterpret_cast<uint32_t*>(pattern_gather_l1_addr);
         uint32_t pattern_gather_idx = pattern_gather_data[j % elements_per_tile];
         
         // Load pattern tile if needed
+        // problematic code starts here: 
         uint32_t pattern_tile_id = pattern_gather_idx / elements_per_tile;
         if (pattern_tile_id != cached_pattern_tile_id) {
             uint32_t pattern_tile_addr = pattern_addr + pattern_tile_id * tile_size_bytes;
@@ -74,60 +60,5 @@ void kernel_main() {
             noc_async_read_barrier();
             cached_pattern_tile_id = pattern_tile_id;
         }
-        
-        // // Get pattern[pattern_gather[j]] value - double indirection
-        // uint32_t* pattern_data = reinterpret_cast<uint32_t*>(pattern_l1_addr);
-        // uint32_t pattern_idx = pattern_data[pattern_gather_idx % elements_per_tile];
-        
-        // // Calculate source index in sparse array
-        // uint32_t src_index = pattern_idx + (delta * i);
-        // if (src_index >= sparse_size_elements) {
-        //     src_index = src_index % sparse_size_elements;
-        // }
-        
-        // // Load sparse tile if needed
-        // uint32_t sparse_tile_id = src_index / elements_per_tile;
-        // if (sparse_tile_id != cached_sparse_tile_id) {
-        //     uint32_t sparse_tile_addr = sparse_addr + sparse_tile_id * tile_size_bytes;
-        //     noc_async_read(get_noc_addr(sparse_tile_addr), sparse_l1_addr, tile_size_bytes);
-        //     noc_async_read_barrier();
-        //     cached_sparse_tile_id = sparse_tile_id;
-        // }
-        
-        // // Read value from sparse array (using uint16_t for BFloat16)
-        // uint16_t* sparse_data = reinterpret_cast<uint16_t*>(sparse_l1_addr);
-        // uint16_t src_value = sparse_data[src_index % elements_per_tile];
-        
-        // // Calculate destination index in dense array
-        // uint32_t dst_index = j + pattern_length * (i % wrap);
-        
-        // // Load dense tile if different from cached
-        // uint32_t dense_tile_id = dst_index / elements_per_tile;
-        // if (dense_tile_id != cached_dense_tile_id) {
-        //     // Write back previous dense tile if we had one
-        //     if (cached_dense_tile_id != UINT32_MAX) {
-        //         uint32_t prev_dense_tile_addr = dense_addr + cached_dense_tile_id * tile_size_bytes;
-        //         noc_async_write(dense_l1_addr, get_noc_addr(prev_dense_tile_addr), tile_size_bytes);
-        //         noc_async_write_barrier();
-        //     }
-            
-        //     uint32_t dense_tile_addr = dense_addr + dense_tile_id * tile_size_bytes;
-        //     noc_async_read(get_noc_addr(dense_tile_addr), dense_l1_addr, tile_size_bytes);
-        //     noc_async_read_barrier();
-        //     cached_dense_tile_id = dense_tile_id;
-        // }
-        
-        // // Write value to dense array (using uint16_t for BFloat16)
-        // uint16_t* dense_data = reinterpret_cast<uint16_t*>(dense_l1_addr);
-        // dense_data[dst_index % elements_per_tile] = src_value;
     }
-    
-    // // Write back the last dense tile if we modified any
-    // if (cached_dense_tile_id != UINT32_MAX) {
-    //     uint32_t dense_tile_addr = dense_addr + cached_dense_tile_id * tile_size_bytes;
-    //     noc_async_write(dense_l1_addr, get_noc_addr(dense_tile_addr), tile_size_bytes);
-    //     noc_async_write_barrier();
-    // }
-    
-    // DPRINT << "Multi-gather kernel complete for core" << ENDL();
 }
