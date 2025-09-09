@@ -122,12 +122,12 @@ void kernel_main() {
         // dense_data[dst_index % elements_per_tile] = src_value;
     }
     
-    // Write back the last dense tile if we modified any
-    if (cached_dense_tile_id != UINT32_MAX) {
-        uint32_t dense_tile_addr = dense_addr + cached_dense_tile_id * tile_size_bytes;
-        noc_async_write(dense_l1_addr, get_noc_addr(dense_tile_addr), tile_size_bytes);
-        noc_async_write_barrier();
-    }
+    // // Write back the last dense tile if we modified any
+    // if (cached_dense_tile_id != UINT32_MAX) {
+    //     uint32_t dense_tile_addr = dense_addr + cached_dense_tile_id * tile_size_bytes;
+    //     noc_async_write(dense_l1_addr, get_noc_addr(dense_tile_addr), tile_size_bytes);
+    //     noc_async_write_barrier();
+    // }
     
     // DPRINT << "Multi-gather kernel complete for core" << ENDL();
 }
