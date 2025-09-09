@@ -85,14 +85,14 @@ void kernel_main() {
             src_index = src_index % sparse_size_elements;
         }
         
-        // Load sparse tile if needed
-        uint32_t sparse_tile_id = src_index / elements_per_tile;
-        if (sparse_tile_id != cached_sparse_tile_id) {
-            uint32_t sparse_tile_addr = sparse_addr + sparse_tile_id * tile_size_bytes;
-            noc_async_read(get_noc_addr(sparse_tile_addr), sparse_l1_addr, tile_size_bytes);
-            noc_async_read_barrier();
-            cached_sparse_tile_id = sparse_tile_id;
-        }
+        // // Load sparse tile if needed
+        // uint32_t sparse_tile_id = src_index / elements_per_tile;
+        // if (sparse_tile_id != cached_sparse_tile_id) {
+        //     uint32_t sparse_tile_addr = sparse_addr + sparse_tile_id * tile_size_bytes;
+        //     noc_async_read(get_noc_addr(sparse_tile_addr), sparse_l1_addr, tile_size_bytes);
+        //     noc_async_read_barrier();
+        //     cached_sparse_tile_id = sparse_tile_id;
+        // }
         
         // // Read value from sparse array (using uint16_t for BFloat16)
         // uint16_t* sparse_data = reinterpret_cast<uint16_t*>(sparse_l1_addr);
