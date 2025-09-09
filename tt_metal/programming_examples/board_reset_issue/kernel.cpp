@@ -94,32 +94,32 @@ void kernel_main() {
             cached_sparse_tile_id = sparse_tile_id;
         }
         
-        // Read value from sparse array (using uint16_t for BFloat16)
-        uint16_t* sparse_data = reinterpret_cast<uint16_t*>(sparse_l1_addr);
-        uint16_t src_value = sparse_data[src_index % elements_per_tile];
+        // // Read value from sparse array (using uint16_t for BFloat16)
+        // uint16_t* sparse_data = reinterpret_cast<uint16_t*>(sparse_l1_addr);
+        // uint16_t src_value = sparse_data[src_index % elements_per_tile];
         
-        // Calculate destination index in dense array
-        uint32_t dst_index = j + pattern_length * (i % wrap);
+        // // Calculate destination index in dense array
+        // uint32_t dst_index = j + pattern_length * (i % wrap);
         
-        // Load dense tile if different from cached
-        uint32_t dense_tile_id = dst_index / elements_per_tile;
-        if (dense_tile_id != cached_dense_tile_id) {
-            // Write back previous dense tile if we had one
-            if (cached_dense_tile_id != UINT32_MAX) {
-                uint32_t prev_dense_tile_addr = dense_addr + cached_dense_tile_id * tile_size_bytes;
-                noc_async_write(dense_l1_addr, get_noc_addr(prev_dense_tile_addr), tile_size_bytes);
-                noc_async_write_barrier();
-            }
+        // // Load dense tile if different from cached
+        // uint32_t dense_tile_id = dst_index / elements_per_tile;
+        // if (dense_tile_id != cached_dense_tile_id) {
+        //     // Write back previous dense tile if we had one
+        //     if (cached_dense_tile_id != UINT32_MAX) {
+        //         uint32_t prev_dense_tile_addr = dense_addr + cached_dense_tile_id * tile_size_bytes;
+        //         noc_async_write(dense_l1_addr, get_noc_addr(prev_dense_tile_addr), tile_size_bytes);
+        //         noc_async_write_barrier();
+        //     }
             
-            uint32_t dense_tile_addr = dense_addr + dense_tile_id * tile_size_bytes;
-            noc_async_read(get_noc_addr(dense_tile_addr), dense_l1_addr, tile_size_bytes);
-            noc_async_read_barrier();
-            cached_dense_tile_id = dense_tile_id;
-        }
+        //     uint32_t dense_tile_addr = dense_addr + dense_tile_id * tile_size_bytes;
+        //     noc_async_read(get_noc_addr(dense_tile_addr), dense_l1_addr, tile_size_bytes);
+        //     noc_async_read_barrier();
+        //     cached_dense_tile_id = dense_tile_id;
+        // }
         
-        // Write value to dense array (using uint16_t for BFloat16)
-        uint16_t* dense_data = reinterpret_cast<uint16_t*>(dense_l1_addr);
-        dense_data[dst_index % elements_per_tile] = src_value;
+        // // Write value to dense array (using uint16_t for BFloat16)
+        // uint16_t* dense_data = reinterpret_cast<uint16_t*>(dense_l1_addr);
+        // dense_data[dst_index % elements_per_tile] = src_value;
     }
     
     // Write back the last dense tile if we modified any
