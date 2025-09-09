@@ -1,11 +1,12 @@
-// Exact copy of multi_gather_kernel.cpp from Spatter
-// This demonstrates the board reset bug with double indirection
+// SPDX-FileCopyrightText: 2025 The Spatter Authors
+// SPDX-License-Identifier: BSD-3-Clause
+
 #include <cstdint>
 #include "dataflow_api.h"
 #include "debug/dprint.h"
 
 void kernel_main() {
-    // Runtime arguments - exact same as original multi_gather
+    // Runtime arguments
     uint32_t sparse_addr = get_arg_val<uint32_t>(0);
     uint32_t dense_addr = get_arg_val<uint32_t>(1);
     uint32_t pattern_addr = get_arg_val<uint32_t>(2);
@@ -23,11 +24,11 @@ void kernel_main() {
         return;
     }
     
-    // Compile-time buffer indices - using simpler indices for minimal example
-    constexpr uint32_t cb_pattern = 0;
-    constexpr uint32_t cb_pattern_gather = 1;
-    constexpr uint32_t cb_sparse = 2;
-    constexpr uint32_t cb_dense = 3;
+    // Compile-time buffer indices
+    constexpr uint32_t cb_pattern = get_compile_time_arg_val(0);
+    constexpr uint32_t cb_pattern_gather = get_compile_time_arg_val(1);
+    constexpr uint32_t cb_sparse = get_compile_time_arg_val(2);
+    constexpr uint32_t cb_dense = get_compile_time_arg_val(3);
     
     constexpr uint32_t tile_size_bytes = 2048;  // 32x32 BFloat16 elements
     constexpr uint32_t elements_per_tile = 1024;  // 32x32
@@ -44,10 +45,10 @@ void kernel_main() {
     uint32_t cached_sparse_tile_id = UINT32_MAX;
     uint32_t cached_dense_tile_id = UINT32_MAX;
     
-    DPRINT << "Multi-gather kernel: processing elements " << start_element << " to " << end_element << ENDL();
-    DPRINT << "Pattern length: " << pattern_length << ", delta: " << delta << ", count: " << count << ", wrap: " << wrap << ENDL();
+    // DPRINT << "Multi-gather kernel: processing elements " << start_element << " to " << end_element << ENDL();
+    // DPRINT << "Pattern length: " << pattern_length << ", delta: " << delta << ", count: " << count << ", wrap: " << wrap << ENDL();
     
-    // Process elements assigned to this core
+    // Process elements assigned to this coreth
     for (uint32_t elem_idx = start_element; elem_idx < end_element; elem_idx++) {
         uint32_t j = elem_idx % pattern_length;
         uint32_t i = elem_idx / pattern_length;
@@ -65,17 +66,10 @@ void kernel_main() {
         uint32_t* pattern_gather_data = reinterpret_cast<uint32_t*>(pattern_gather_l1_addr);
         uint32_t pattern_gather_idx = pattern_gather_data[j % elements_per_tile];
         
-        DPRINT << "j=" << j << ", pattern_gather[j]=" << pattern_gather_idx << ENDL();
-        
-        // Load pattern tile if needed - THIS IS THE BUG LINE 70!
-        // When pattern_gather_idx is out of bounds, pattern_tile_id becomes huge
+        // Load pattern tile if needed
         uint32_t pattern_tile_id = pattern_gather_idx / elements_per_tile;
-        DPRINT << "pattern_tile_id=" << pattern_tile_id << ENDL();
-        
         if (pattern_tile_id != cached_pattern_tile_id) {
             uint32_t pattern_tile_addr = pattern_addr + pattern_tile_id * tile_size_bytes;
-            DPRINT << "Reading from pattern_tile_addr=0x" << std::hex << pattern_tile_addr << std::dec << ENDL();
-            // THIS NOC READ CAUSES THE BOARD RESET!
             noc_async_read(get_noc_addr(pattern_tile_addr), pattern_l1_addr, tile_size_bytes);
             noc_async_read_barrier();
             cached_pattern_tile_id = pattern_tile_id;
@@ -135,5 +129,5 @@ void kernel_main() {
         noc_async_write_barrier();
     }
     
-    DPRINT << "Multi-gather kernel complete for core" << ENDL();
+    // DPRINT << "Multi-gather kernel complete for core" << ENDL();
 }
