@@ -75,15 +75,15 @@ void kernel_main() {
             cached_pattern_tile_id = pattern_tile_id;
         }
         
-        // Get pattern[pattern_gather[j]] value - double indirection
-        uint32_t* pattern_data = reinterpret_cast<uint32_t*>(pattern_l1_addr);
-        uint32_t pattern_idx = pattern_data[pattern_gather_idx % elements_per_tile];
+        // // Get pattern[pattern_gather[j]] value - double indirection
+        // uint32_t* pattern_data = reinterpret_cast<uint32_t*>(pattern_l1_addr);
+        // uint32_t pattern_idx = pattern_data[pattern_gather_idx % elements_per_tile];
         
-        // Calculate source index in sparse array
-        uint32_t src_index = pattern_idx + (delta * i);
-        if (src_index >= sparse_size_elements) {
-            src_index = src_index % sparse_size_elements;
-        }
+        // // Calculate source index in sparse array
+        // uint32_t src_index = pattern_idx + (delta * i);
+        // if (src_index >= sparse_size_elements) {
+        //     src_index = src_index % sparse_size_elements;
+        // }
         
         // // Load sparse tile if needed
         // uint32_t sparse_tile_id = src_index / elements_per_tile;
