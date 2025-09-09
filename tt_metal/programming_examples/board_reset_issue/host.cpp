@@ -43,14 +43,10 @@ int main() {
     // Calculate required buffer sizes
     uint32_t max_pattern_idx = pattern_indices.back();
     uint32_t max_pattern_gather_idx = pattern_gather_indices.back();
-    uint32_t sparse_size = std::max(max_pattern_idx + num_elements * delta, 
-                                    static_cast<uint32_t>(100000));  // Ensure large enough
     
     // Calculate buffer sizes in tiles
     uint32_t pattern_tiles = (pattern_length * sizeof(uint32_t) + tile_size_bytes - 1) / tile_size_bytes;
     uint32_t pattern_gather_tiles = (pattern_length * sizeof(uint32_t) + tile_size_bytes - 1) / tile_size_bytes;
-    uint32_t sparse_tiles = (sparse_size * sizeof(uint16_t) + tile_size_bytes - 1) / tile_size_bytes;
-    uint32_t dense_tiles = (num_elements * wrap * sizeof(uint16_t) + tile_size_bytes - 1) / tile_size_bytes;
     
     // Create DRAM buffers
     InterleavedBufferConfig pattern_dram_config{
@@ -67,30 +63,14 @@ int main() {
         .buffer_type = BufferType::DRAM
     };
     
-    InterleavedBufferConfig sparse_dram_config{
-        .device = device,
-        .size = sparse_tiles * tile_size_bytes,
-        .page_size = tile_size_bytes,
-        .buffer_type = BufferType::DRAM
-    };
-    
-    InterleavedBufferConfig dense_dram_config{
-        .device = device,
-        .size = dense_tiles * tile_size_bytes,
-        .page_size = tile_size_bytes,
-        .buffer_type = BufferType::DRAM
-    };
     
     auto pattern_buffer = CreateBuffer(pattern_dram_config);
     auto pattern_gather_buffer = CreateBuffer(pattern_gather_dram_config);
-    auto sparse_buffer = CreateBuffer(sparse_dram_config);
-    auto dense_buffer = CreateBuffer(dense_dram_config);
+   
             
     // Initialize data
     std::vector<uint32_t> pattern_data(pattern_tiles * elements_per_tile, 0);
     std::vector<uint32_t> pattern_gather_data(pattern_gather_tiles * elements_per_tile, 0);
-    std::vector<uint16_t> sparse_data(sparse_tiles * elements_per_tile, 0);
-    std::vector<uint16_t> dense_data(dense_tiles * elements_per_tile, 0);
     
     // Copy patterns to buffers
     for (size_t i = 0; i < pattern_indices.size(); i++) {
@@ -100,16 +80,10 @@ int main() {
         pattern_gather_data[i] = pattern_gather_indices[i];
     }
     
-    // Initialize sparse array with test data
-    for (uint32_t i = 0; i < sparse_size && i < sparse_data.size(); i++) {
-        sparse_data[i] = i % 256;  // Simple test pattern
-    }
     
     // Write buffers to device
     EnqueueWriteBuffer(cq, pattern_buffer, pattern_data, false);
     EnqueueWriteBuffer(cq, pattern_gather_buffer, pattern_gather_data, false);
-    EnqueueWriteBuffer(cq, sparse_buffer, sparse_data, false);
-    EnqueueWriteBuffer(cq, dense_buffer, dense_data, false);
     Finish(cq);
         
     // Create program
@@ -126,8 +100,6 @@ int main() {
     
     auto l1_pattern_buffer = CreateBuffer(l1_config);
     auto l1_pattern_gather_buffer = CreateBuffer(l1_config);
-    auto l1_sparse_buffer = CreateBuffer(l1_config);
-    auto l1_dense_buffer = CreateBuffer(l1_config);
             
     // Compile-time arguments for kernel (CB indices)
     std::vector<uint32_t> compile_args = {
